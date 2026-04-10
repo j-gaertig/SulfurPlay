@@ -38,7 +38,7 @@ public class NewGame implements CommandExecutor, TabCompleter {
             sender.sendMessage(ChatColor.YELLOW + "Warning: This Command is for players only!");
             return false;
         }
-        // Prüfen ob genügend Argumente im Command sind
+        // Prüfen, ob genügend Argumente im Command sind
         if (!(args.length == 2)) {
             sender.sendMessage(ChatColor.YELLOW + "Usage: /newgame <type_of_minigame> <name_of_your_arena>");
             return false;
