@@ -29,6 +29,7 @@ public class NewGame implements CommandExecutor, TabCompleter {
             "ballspawn"
     };
 
+    // Nachrichten, die beim Fußball Arena Erstellen gebraucht werden
     private final String[] stepMessages = {
             "Right-click on the corner of the outer edge of the blue team's goal.", // bluegoal1
             "Right-click on the diagonally opposite corner of the blue team's goal.", // bluegoal2
@@ -39,17 +40,21 @@ public class NewGame implements CommandExecutor, TabCompleter {
             "Right-click where the ball should spawn." // ballspawn
     };
 
+
     private final SulfurFun plugin;
     private final File file;
     private final FileConfiguration config;
-    private final SetupListener setupListener;
+    private SetupListener setupListener;
 
     public NewGame(SulfurFun plugin, SetupListener setupListener) {
         this.plugin = plugin;
         this.setupListener = setupListener;
-        // arenas.yml erstellen / laden
         this.file = new File(plugin.getDataFolder(), "arenas.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+    }
+
+    public void setSetupListener(SetupListener setupListener) {
+        this.setupListener = setupListener;
     }
 
     @Override
@@ -77,7 +82,7 @@ public class NewGame implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // if Schleife
+        // welcher type -> dementsprechend eine Aktion
         if (type.equalsIgnoreCase("football")) {
             config.set(name + ".type", type);
 
@@ -92,7 +97,7 @@ public class NewGame implements CommandExecutor, TabCompleter {
                 config.save(file);
                 player.sendMessage(ChatColor.GREEN + "Arena " + name + " is now saved!");
             } catch (IOException e) {
-                player.sendMessage(ChatColor.RED + "Problem by saving data!");
+                player.sendMessage(ChatColor.RED + "Error while saving to file!");
                 e.printStackTrace();
             }
 
@@ -107,7 +112,7 @@ public class NewGame implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return List.of("football", "upcoming");
+            return List.of("football");
         }
         if (args.length == 2) {
             return List.of("<name_of_arena>");
@@ -136,7 +141,7 @@ public class NewGame implements CommandExecutor, TabCompleter {
                 e.printStackTrace();
             }
 
-            player.sendMessage(ChatColor.GREEN + "Saved " + stepName + "!");
+            // player.sendMessage(ChatColor.GREEN + "Saved " + stepName + "!");
 
             session.nextStep();
             askNextStep(player, session);

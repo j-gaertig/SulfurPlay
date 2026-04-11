@@ -1,0 +1,4 @@
+de\jgaertig\sulfurFun\models\SetupSession.class
+de\jgaertig\sulfurFun\SulfurFun.class
+de\jgaertig\sulfurFun\commands\NewGame.class
+de\jgaertig\sulfurFun\listeners\SetupListener.class

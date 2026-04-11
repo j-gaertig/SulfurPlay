@@ -16,12 +16,17 @@ public final class SulfurFun extends JavaPlugin {
         File folder = getDataFolder();
         if (!folder.exists()) folder.mkdirs();
 
-        SetupListener setupListener = new SetupListener();
-        getServer().getPluginManager().registerEvents((Listener) setupListener, this);
+        NewGame newGameCommand = new NewGame(this, null);
 
-        NewGame newGameCommand = new NewGame(this, setupListener);
-        getCommand("newgame").setExecutor(new NewGame(this, setupListener));
-        getCommand("newgame").setTabCompleter(new NewGame(this, setupListener));
+        SetupListener setupListener = new SetupListener(newGameCommand);
+
+        newGameCommand.setSetupListener(setupListener);
+
+        getCommand("newgame").setExecutor(newGameCommand);
+        getCommand("newgame").setTabCompleter(newGameCommand);
+
+        getServer().getPluginManager().registerEvents(setupListener, this);
+
 
         String gold = ChatColor.GOLD.toString();
         String yellow = ChatColor.YELLOW.toString();

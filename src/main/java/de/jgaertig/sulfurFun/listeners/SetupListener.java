@@ -34,6 +34,7 @@ public class SetupListener implements Listener {
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
         // Prüfen, ob es ein Rechtsklick auf einen Block war
+        if (event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) return;
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
         Player player = event.getPlayer();
