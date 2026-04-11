@@ -1,6 +1,8 @@
 package de.jgaertig.sulfurFun;
 
 import de.jgaertig.sulfurFun.commands.NewGame;
+import de.jgaertig.sulfurFun.listeners.SetupListener;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -11,15 +13,15 @@ public final class SulfurFun extends JavaPlugin {
 
     @Override
     public void onEnable() {
-
-        // load commands:
-
         File folder = getDataFolder();
         if (!folder.exists()) folder.mkdirs();
 
-        NewGame newGameCommand = new NewGame(this);
-        getCommand("newgame").setExecutor(new NewGame(this));
-        getCommand("newgame").setTabCompleter(new NewGame(this));
+        SetupListener setupListener = new SetupListener();
+        getServer().getPluginManager().registerEvents((Listener) setupListener, this);
+
+        NewGame newGameCommand = new NewGame(this, setupListener);
+        getCommand("newgame").setExecutor(new NewGame(this, setupListener));
+        getCommand("newgame").setTabCompleter(new NewGame(this, setupListener));
 
         String gold = ChatColor.GOLD.toString();
         String yellow = ChatColor.YELLOW.toString();

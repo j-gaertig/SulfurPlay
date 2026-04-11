@@ -1,7 +1,10 @@
 package de.jgaertig.sulfurFun.commands;
 
 import de.jgaertig.sulfurFun.SulfurFun;
+import de.jgaertig.sulfurFun.listeners.SetupListener;
+import de.jgaertig.sulfurFun.models.SetupSession;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -19,13 +22,31 @@ import java.util.UUID;
 
 public class NewGame implements CommandExecutor, TabCompleter {
 
+    // Die Reihenfolge, in der der Spieler die Punkte abläuft
+    private final String[] steps = {
+            "bluegoal1", "bluegoal2", "blueplayerspawn",
+            "redgoal1", "redgoal2", "redplayerspawn",
+            "ballspawn"
+    };
+
+    private final String[] stepMessages = {
+            "Right-click on the corner of the outer edge of the blue team's goal.", // bluegoal1
+            "Right-click on the diagonally opposite corner of the blue team's goal.", // bluegoal2
+            "Right-click on the spawn point where the blue team's players spawn.", // blueplayerspawn
+            "Right-click on the corner of the outer edge of the red team's goal.", // redgoal1
+            "Right-click on the diagonally opposite corner of the red team's goal.", // redgoal2
+            "Right-click on the spawn point where the red team's players spawn.", // redplayerspawn
+            "Right-click where the ball should spawn." // ballspawn
+    };
+
     private final SulfurFun plugin;
     private final File file;
     private final FileConfiguration config;
-    private final Map<UUID, String> setupPlayers = new HashMap<>();
+    private final SetupListener setupListener;
 
-    public NewGame(SulfurFun plugin) {
+    public NewGame(SulfurFun plugin, SetupListener setupListener) {
         this.plugin = plugin;
+        this.setupListener = setupListener;
         // arenas.yml erstellen / laden
         this.file = new File(plugin.getDataFolder(), "arenas.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
@@ -48,13 +69,6 @@ public class NewGame implements CommandExecutor, TabCompleter {
         Player player = (Player) sender;
         String type = args[0];
         String name = args[1];
-        String redgoal1 = "";
-        String redgoal2 = "";
-        String redplayerspawn = "";
-        String bluegoal1 = "";
-        String bluegoal2 = "";
-        String blueplayerspawn = "";
-        String ballspawn = "";
         String playerperteam = "";
         String playerdamage = "";
 
@@ -65,12 +79,13 @@ public class NewGame implements CommandExecutor, TabCompleter {
 
         // if Schleife
         if (type.equalsIgnoreCase("football")) {
-
-            player.sendMessage(ChatColor.BLUE + "Step 1: " + ChatColor.WHITE + "Please Right-Click on the first corner of the Blue Goal.");
-
-
-            // Werte speichern
             config.set(name + ".type", type);
+
+            setupListener.addPlayer(player.getUniqueId(), name);
+
+            SetupSession session = setupListener.getSession(player.getUniqueId());
+            askNextStep(player, session);
+
 
             // Datei speichern
             try {
@@ -98,5 +113,48 @@ public class NewGame implements CommandExecutor, TabCompleter {
             return List.of("<name_of_arena>");
         }
         return List.of();
+    }
+
+    public void handleSetupClick(Player player, Location loc) {
+        SetupSession session = setupListener.getSession(player.getUniqueId());
+        int currentStepIndex = session.getStep() - 1;
+
+        if (currentStepIndex < steps.length) {
+            String stepName = steps[currentStepIndex];
+            String path = session.getArenaName() + "." + stepName;
+
+            config.set(path + ".world", loc.getWorld().getName());
+            config.set(path + ".x", loc.getBlockX());
+            config.set(path + ".y", loc.getBlockY());
+            config.set(path + ".z", loc.getBlockZ());
+
+            // WICHTIG: Die Datei tatsächlich auf der Festplatte speichern
+            try {
+                config.save(file);
+            } catch (IOException e) {
+                player.sendMessage(ChatColor.RED + "Error while saving to file!");
+                e.printStackTrace();
+            }
+
+            player.sendMessage(ChatColor.GREEN + "Saved " + stepName + "!");
+
+            session.nextStep();
+            askNextStep(player, session);
+        }
+    }
+
+    private void askNextStep(Player player, SetupSession session){
+        int index = session.getStep() - 1;
+
+        if (index < stepMessages.length) {
+            // Wir holen den passenden Satz aus unserem neuen Array
+            String message = stepMessages[index];
+            player.sendMessage(ChatColor.BLUE + "Next Step: " + ChatColor.WHITE + message);
+        } else {
+            // Wenn alle Koordinaten fertig sind
+            player.sendMessage(ChatColor.GOLD + "All positions are saved.");
+            // Hier könnten wir später die Session beenden
+            setupListener.removePlayer(player.getUniqueId());
+        }
     }
 }
