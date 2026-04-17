@@ -1,6 +1,6 @@
 # SulfurFun
 
-![Java](https://badgen.net)
-![License](https://badgen.net)
-![Stars](https://badgen.net)
-![Issues](https://badgen.net)
+![Java](https://shields.io)
+![License](https://shields.io)
+![Stars](https://shields.io)
+![Issues](https://shields.io)
