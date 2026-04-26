@@ -109,16 +109,30 @@ public class SetupListener implements Listener {
             event.setCancelled(true);
             String message = event.getMessage();
 
-            try {
-                // Wandelt den Text in eine Zahl um
-                int amount = Integer.parseInt(message);
+            // Holt das Muster für den aktuellen Schritt aus dem Setup
+            String pattern = session.getGameSetup().getInputPatterns()[currentIndex];
 
-                // Wechselt zurück auf den Haupt-Thread für die Verarbeitung
+            // Prüfung: Wenn das Muster null ist ODER die Nachricht zum Muster passt
+            if (pattern == null || message.matches(pattern)) {
+
+                // Wir deklarieren eine Variable für den fertigen Wert (Zahl oder Text)
+                Object finalValue;
+
+                // Wenn das Muster nur Zahlen zulässt, wandeln wir es um
+                if (pattern != null && pattern.contains("[0-9]")) {
+                    finalValue = Integer.parseInt(message); // Hier wird aus "5" die echte Zahl 5
+                } else {
+                    finalValue = message; // Ansonsten bleibt es ein String
+                }
+
+                // Jetzt übergeben wir den finalValue (als Object) an die Zentrale
                 Bukkit.getScheduler().runTask(newGameCommand.getPlugin(), () -> {
-                    newGameCommand.handleSetupStep(player, amount);
+                    newGameCommand.handleSetupStep(player, finalValue);
                 });
-            } catch (NumberFormatException e) {
-                player.sendMessage(ChatColor.RED + "Please enter a valid number!");
+
+            } else {
+                // Wenn das Muster existiert, aber die Nachricht nicht passt
+                player.sendMessage(ChatColor.RED + "Invalid input! Please follow the instructions.");
             }
         }
     }

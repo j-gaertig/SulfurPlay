@@ -9,6 +9,7 @@ public interface GameSetup {
 
     String[] getSteps();        // Die Namen der Config-Pfade (z.B. "bluegoal1")
     String[] getMessages();     // Die Nachrichten an den Spieler
-    String getType();           // Der Name des Modus (z.B. "football")
+    String getType();
     StepType[] getStepTypes(); // Gibt zurück, ob ein Schritt CLICK oder CHAT ist
+    String[] getInputPatterns(); // Gibt zurück, welche Eingaben für CHAT-Schritte gültig sind (z.B. "\\d+" für Zahlen)
 }

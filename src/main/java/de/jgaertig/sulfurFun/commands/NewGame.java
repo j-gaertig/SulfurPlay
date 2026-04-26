@@ -81,6 +81,8 @@ public class NewGame implements CommandExecutor, TabCompleter {
             askNextStep(player, session);
 
             plugin.saveArenaConfig();
+        } else {
+            player.sendMessage(ChatColor.RED + "Warning: '" + type + "' is not a valid gamemode!");
         }
 
         return true;
@@ -108,7 +110,7 @@ public class NewGame implements CommandExecutor, TabCompleter {
         finishStep(player);
     }
 
-    public void handleSetupStep(Player player, int value) {
+    public void handleSetupStep(Player player, Object value) {
         saveToConfig(player, value);
         finishStep(player);
     }
