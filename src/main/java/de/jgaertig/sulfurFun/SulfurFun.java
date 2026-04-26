@@ -3,50 +3,92 @@ package de.jgaertig.sulfurFun;
 import de.jgaertig.sulfurFun.commands.DeleteGame;
 import de.jgaertig.sulfurFun.commands.NewGame;
 import de.jgaertig.sulfurFun.listeners.SetupListener;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
 
 public final class SulfurFun extends JavaPlugin {
 
+    // Instanzvariablen für die Konfiguration
     private File arenaFile;
     private FileConfiguration arenaConfig;
 
     @Override
     public void onEnable() {
-        File folder = getDataFolder();
-        if (!folder.exists()) folder.mkdirs();
+        // Initialisiert den Plugin-Ordner und die Arena-Datei
+        setupConfiguration();
 
-        // 1. Datei laden
+        // Initialisiert die Listener und Commands
+        setupManagers();
+
+        // Zeigt das Plugin-Logo in der Konsole an
+        sendEnableMessage();
+    }
+
+    @Override
+    public void onDisable() {
+        // Logik für das Ausschalten des Plugins
+    }
+
+    // Hilfsmethoden für die Organisation
+    private void setupConfiguration() {
+        // Erstellt den Datenordner, falls er nicht existiert
+        if (!getDataFolder().exists()) {
+            getDataFolder().mkdirs();
+        }
+
+        // Lädt oder erstellt die arenas.yml
         arenaFile = new File(getDataFolder(), "arenas.yml");
         if (!arenaFile.exists()) {
-            saveResource("arenas.yml", false); // Falls du eine Standard-Datei im Jar hast
+            saveResource("arenas.yml", false);
         }
         arenaConfig = YamlConfiguration.loadConfiguration(arenaFile);
+    }
 
+    private void setupManagers() {
+        // Initialisiert den SetupListener
         SetupListener setupListener = new SetupListener();
 
+        // Initialisiert die Commands
         NewGame newGameCommand = new NewGame(this, setupListener);
+        DeleteGame deleteGameCommand = new DeleteGame(this, setupListener);
 
+        // Verknüpft den Listener mit dem Command (für Rückfragen)
         setupListener.setNewGameCommand(newGameCommand);
 
+        // Registriert die Commands bei Bukkit
         getCommand("newgame").setExecutor(newGameCommand);
         getCommand("newgame").setTabCompleter(newGameCommand);
-
-        DeleteGame deleteGameCommand = new DeleteGame(this, setupListener);
 
         getCommand("deletegame").setExecutor(deleteGameCommand);
         getCommand("deletegame").setTabCompleter(deleteGameCommand);
 
+        // Registriert den Listener für Events
         getServer().getPluginManager().registerEvents(setupListener, this);
+    }
 
+    // Zugriffsmethoden für andere Klassen
+    public FileConfiguration getArenaConfig() {
+        // Liefert die aktuelle Konfiguration zurück 📖
+        return arenaConfig;
+    }
 
+    public void saveArenaConfig() {
+        // Schreibt Änderungen dauerhaft in die Datei 💾
+        try {
+            arenaConfig.save(arenaFile);
+        } catch (IOException e) {
+            getLogger().severe("Could not save arenas.yml!");
+        }
+    }
+
+    private void sendEnableMessage() {
+        // Sendet das Logo und Status-Infos an die Konsole
         String gold = ChatColor.GOLD.toString();
         String yellow = ChatColor.YELLOW.toString();
         String green = ChatColor.GREEN.toString();
@@ -71,23 +113,5 @@ public final class SulfurFun extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(gray + "Version: " + getDescription().getVersion());
         Bukkit.getConsoleSender().sendMessage(green + "Plugin loaded ...");
         Bukkit.getConsoleSender().sendMessage("");
-    }
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
-    }
-
-    // Damit andere Klassen die Config lesen können 📖
-    public FileConfiguration getArenaConfig() {
-        return arenaConfig;
-    }
-
-    // Damit andere Klassen Änderungen festschreiben können 💾
-    public void saveArenaConfig() {
-        try {
-            arenaConfig.save(arenaFile);
-        } catch (IOException e) {
-            getLogger().severe("Could not save arenas.yml!");
-        }
     }
 }
