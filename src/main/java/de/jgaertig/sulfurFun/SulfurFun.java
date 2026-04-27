@@ -120,13 +120,36 @@ public final class SulfurFun extends JavaPlugin {
         }
 
         public void loadLanguages() {
-            List<String> languages = Arrays.asList("en_us.yml", "de_de.yml");
+            List<String> languages = Arrays.asList(
+                    "en_us.yml", // Englisch (USA)
+                    "de_de.yml", // Deutsch
+                    "es_es.yml", // Spanisch (Spanien)
+                    "fr_fr.yml", // Französisch (Frankreich)
+                    "ru_ru.yml", // Russisch
+                    "pt_br.yml", // Portugiesisch (Brasilien)
+                    "zh_cn.yml", // Chinesisch (Vereinfacht)
+                    "it_it.yml", // Italienisch
+                    "pl_pl.yml", // Polnisch
+                    "nl_nl.yml", // Niederländisch
+                    "tr_tr.yml", // Türkisch
+                    "ja_jp.yml"  // Japanisch
+            );
             for (String lang : languages) {
                 File file = new File(plugin.getDataFolder(), "languages/" + lang);
                 if (!file.exists()) {
                     plugin.saveResource("languages/" + lang, false);
                 }
-                configs.put(lang.replace(".yml", ""), YamlConfiguration.loadConfiguration(file));
+
+                // Hier kommt die Änderung:
+                try (java.io.InputStreamReader reader = new java.io.InputStreamReader(
+                        new java.io.FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8)) {
+
+                    YamlConfiguration config = YamlConfiguration.loadConfiguration(reader);
+                    configs.put(lang.replace(".yml", ""), config);
+
+                } catch (java.io.IOException e) {
+                    plugin.getLogger().severe("Konnte Sprache nicht laden: " + lang);
+                }
             }
         }
 
