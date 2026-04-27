@@ -20,21 +20,21 @@ import java.util.UUID;
 
 public class NewGame implements CommandExecutor, TabCompleter {
 
-    // Instanzvariablen
     private final SulfurFun plugin;
     private final Map<String, GameSetup> availableGames = new HashMap<>();
     private SetupListener setupListener;
+    // Der Manager für die Sprachen 🌍
+    private final SulfurFun.LanguageManager languageManager;
 
-    // Konstruktor
-    public NewGame(SulfurFun plugin, SetupListener setupListener) {
+    // Konstruktor angepasst
+    public NewGame(SulfurFun plugin, SetupListener setupListener, SulfurFun.LanguageManager languageManager) {
         this.plugin = plugin;
         this.setupListener = setupListener;
+        this.languageManager = languageManager;
 
-        // Registriert verfügbare Spielmodi
         availableGames.put("football", new FootballSetup());
     }
 
-    // Getter und Setter
     public SulfurFun getPlugin() {
         return this.plugin;
     }
@@ -43,37 +43,33 @@ public class NewGame implements CommandExecutor, TabCompleter {
         this.setupListener = setupListener;
     }
 
-    // Haupt-Command Logik
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // Prüft, ob der Absender ein Spieler ist
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.YELLOW + "Warning: This Command is for players only!");
+            // Konsole bekommt eine direkte Nachricht, da sie keine Locale hat
+            sender.sendMessage(ChatColor.YELLOW + "This command is for players only!");
             return false;
         }
 
         Player player = (Player) sender;
 
-        // Prüft die Anzahl der Argumente
         if (args.length != 2) {
-            player.sendMessage(ChatColor.YELLOW + "Usage: /newgame <type_of_minigame> <name_of_your_arena>");
+            languageManager.send(player, "messages.newgame.usage");
             return false;
         }
 
         String type = args[0].toLowerCase();
         String name = args[1];
 
-        // Prüft, ob die Arena bereits existiert
         if (plugin.getArenaConfig().contains(name)) {
-            player.sendMessage(ChatColor.RED + "Warning: '" + name + "' already exists!");
+            // Nutzt Platzhalter für den Namen
+            languageManager.send(player, "messages.newgame.alreadyexists", "%name%", name);
             return true;
         }
 
-        // Führt die Aktion basierend auf dem Spieltyp aus
         if (availableGames.containsKey(type)) {
             GameSetup selectedSetup = availableGames.get(type);
 
-            // Startet eine neue Setup-Session
             setupListener.addPlayer(player.getUniqueId(), name, selectedSetup);
             plugin.getArenaConfig().set(name + ".type", type);
 
@@ -82,29 +78,27 @@ public class NewGame implements CommandExecutor, TabCompleter {
 
             plugin.saveArenaConfig();
         } else {
-            player.sendMessage(ChatColor.RED + "Warning: '" + type + "' is not a valid gamemode!");
+            // Nutzt Platzhalter für den Typ
+            languageManager.send(player, "messages.newgame.invalidtype", "%type%", type);
         }
 
         return true;
     }
 
-    // Tab-Vorschläge
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        // Schlägt Spielmodi vor
         if (args.length == 1) {
             return List.copyOf(availableGames.keySet());
         }
 
-        // Schlägt Platzhalter für den Namen vor
         if (args.length == 2) {
+            // Tab-Vorschlag wird hier nicht übersetzt, da es ein technischer Hinweis ist
             return List.of("<name_of_arena>");
         }
 
         return List.of();
     }
 
-    // Schnittstellen für den Listener
     public void handleSetupStep(Player player, Location loc) {
         saveToConfig(player, loc);
         finishStep(player);
@@ -115,17 +109,19 @@ public class NewGame implements CommandExecutor, TabCompleter {
         finishStep(player);
     }
 
-    // Interne Hilfsmethoden zur Verarbeitung
     private void askNextStep(Player player, SetupSession session) {
         int index = session.getStep() - 1;
         GameSetup setup = session.getGameSetup();
 
-        // Prüft, ob weitere Schritte im Setup vorhanden sind
         if (index < setup.getMessages().length) {
-            String message = setup.getMessages()[index];
-            player.sendMessage(ChatColor.BLUE + "Next Step: " + ChatColor.WHITE + message);
+            String stepPath = setup.getMessages()[index];
+            // Wir kombinieren den "Next Step" Präfix mit der eigentlichen Anweisung
+            String nextStepText = languageManager.getMessage(player, "messages.newgame.nextstep");
+            String instruction = languageManager.getMessage(player, stepPath);
+
+            player.sendMessage(ChatColor.BLUE + nextStepText + ChatColor.WHITE + instruction);
         } else {
-            player.sendMessage(ChatColor.GOLD + "All positions are saved.");
+            languageManager.send(player, "messages.newgame.finished");
             setupListener.removePlayer(player.getUniqueId());
         }
     }
@@ -135,7 +131,6 @@ public class NewGame implements CommandExecutor, TabCompleter {
         String stepName = session.getGameSetup().getSteps()[session.getStep() - 1];
         String path = session.getArenaName() + "." + stepName;
 
-        // Speichert entweder Koordinaten oder einfache Werte
         if (value instanceof Location) {
             Location loc = (Location) value;
             plugin.getArenaConfig().set(path + ".world", loc.getWorld().getName());
@@ -151,8 +146,6 @@ public class NewGame implements CommandExecutor, TabCompleter {
 
     private void finishStep(Player player) {
         SetupSession session = setupListener.getSession(player.getUniqueId());
-
-        // Erhöht den Fortschritt und fragt den nächsten Schritt ab
         session.nextStep();
         askNextStep(player, session);
     }

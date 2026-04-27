@@ -5,44 +5,45 @@ import de.jgaertig.sulfurFun.commands.NewGame;
 import de.jgaertig.sulfurFun.listeners.SetupListener;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class SulfurFun extends JavaPlugin {
 
-    // Instanzvariablen für die Konfiguration
     private File arenaFile;
     private FileConfiguration arenaConfig;
+    private LanguageManager languageManager;
 
     @Override
     public void onEnable() {
-        // Initialisiert den Plugin-Ordner und die Arena-Datei
         setupConfiguration();
-
-        // Initialisiert die Listener und Commands
+        // Manager zuerst initialisieren!
+        this.languageManager = new LanguageManager(this);
         setupManagers();
-
-        // Zeigt das Plugin-Logo in der Konsole an
         sendEnableMessage();
     }
 
-    @Override
-    public void onDisable() {
-        // Logik für das Ausschalten des Plugins
+    public LanguageManager getLanguageManager() {
+        return languageManager;
     }
 
-    // Hilfsmethoden für die Organisation
+    @Override
+    public void onDisable() {}
+
     private void setupConfiguration() {
-        // Erstellt den Datenordner, falls er nicht existiert
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
         }
-
-        // Lädt oder erstellt die arenas.yml
         arenaFile = new File(getDataFolder(), "arenas.yml");
         if (!arenaFile.exists()) {
             saveResource("arenas.yml", false);
@@ -51,35 +52,30 @@ public final class SulfurFun extends JavaPlugin {
     }
 
     private void setupManagers() {
-        // Initialisiert den SetupListener
-        SetupListener setupListener = new SetupListener();
+        // 1. Listener mit Manager erstellen
+        SetupListener setupListener = new SetupListener(this.languageManager);
 
-        // Initialisiert die Commands
-        NewGame newGameCommand = new NewGame(this, setupListener);
-        DeleteGame deleteGameCommand = new DeleteGame(this, setupListener);
+        // 2. Commands mit Manager erstellen
+        NewGame newGameCommand = new NewGame(this, setupListener, this.languageManager);
+        DeleteGame deleteGameCommand = new DeleteGame(this, setupListener, this.languageManager);
 
-        // Verknüpft den Listener mit dem Command (für Rückfragen)
+        // 3. Verknüpfung setzen
         setupListener.setNewGameCommand(newGameCommand);
 
-        // Registriert die Commands bei Bukkit
+        // 4. Registrierung
         getCommand("newgame").setExecutor(newGameCommand);
         getCommand("newgame").setTabCompleter(newGameCommand);
-
         getCommand("deletegame").setExecutor(deleteGameCommand);
         getCommand("deletegame").setTabCompleter(deleteGameCommand);
 
-        // Registriert den Listener für Events
         getServer().getPluginManager().registerEvents(setupListener, this);
     }
 
-    // Zugriffsmethoden für andere Klassen
     public FileConfiguration getArenaConfig() {
-        // Liefert die aktuelle Konfiguration zurück 📖
         return arenaConfig;
     }
 
     public void saveArenaConfig() {
-        // Schreibt Änderungen dauerhaft in die Datei 💾
         try {
             arenaConfig.save(arenaFile);
         } catch (IOException e) {
@@ -88,7 +84,6 @@ public final class SulfurFun extends JavaPlugin {
     }
 
     private void sendEnableMessage() {
-        // Sendet das Logo und Status-Infos an die Konsole
         String gold = ChatColor.GOLD.toString();
         String yellow = ChatColor.YELLOW.toString();
         String green = ChatColor.GREEN.toString();
@@ -113,5 +108,48 @@ public final class SulfurFun extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(gray + "Version: " + getDescription().getVersion());
         Bukkit.getConsoleSender().sendMessage(green + "Plugin loaded ...");
         Bukkit.getConsoleSender().sendMessage("");
+    }
+
+    public class LanguageManager {
+        private final JavaPlugin plugin;
+        private final Map<String, FileConfiguration> configs = new HashMap<>();
+
+        public LanguageManager(JavaPlugin plugin) {
+            this.plugin = plugin;
+            loadLanguages();
+        }
+
+        public void loadLanguages() {
+            List<String> languages = Arrays.asList("en_us.yml", "de_de.yml");
+            for (String lang : languages) {
+                File file = new File(plugin.getDataFolder(), "languages/" + lang);
+                if (!file.exists()) {
+                    plugin.saveResource("languages/" + lang, false);
+                }
+                configs.put(lang.replace(".yml", ""), YamlConfiguration.loadConfiguration(file));
+            }
+        }
+
+        public String getMessage(Player player, String path) {
+            String locale = player.getLocale().toLowerCase();
+            FileConfiguration config = configs.getOrDefault(locale, configs.get("en_us"));
+            String message = config.getString(path);
+            if (message == null) return "Missing: " + path;
+            return ChatColor.translateAlternateColorCodes('&', message);
+        }
+
+        public void send(CommandSender sender, String path, String... replacements) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage(path);
+                return;
+            }
+            String message = getMessage(player, path);
+            for (int i = 0; i < replacements.length; i += 2) {
+                if (i + 1 < replacements.length) {
+                    message = message.replace(replacements[i], replacements[i + 1]);
+                }
+            }
+            player.sendMessage(message);
+        }
     }
 }

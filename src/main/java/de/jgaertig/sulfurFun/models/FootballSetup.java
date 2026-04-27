@@ -6,31 +6,37 @@ public class FootballSetup implements GameSetup {
 
     @Override
     public String[] getSteps() {
-        return new String[]{"bluegoal1", "bluegoal2", "blueplayerspawn", "redgoal1", "redgoal2", "redplayerspawn", "ballspawn", "maxplayer", "touchball"};
+        return new String[]{"bluegoal1", "bluegoal2", "blueplayerspawn", "redgoal1", "redgoal2", "redplayerspawn", "ballspawn", "playingtime", "maxplayer", "balls", "touchball", "breakingblocks", "placingblocks", "countdown", "goalswin"};
     }
 
     @Override
     public String[] getMessages() {
         return new String[]{
-                "Right-click blue goal corner 1",
-                "Right-click the OPPOSITE (diagonal) blue goal corner 2", // Klarer Hinweis
-                "Right-click blue team's spawn location",
-                "Right-click red goal corner 1",
-                "Right-click the OPPOSITE (diagonal) red goal corner 2", // Klarer Hinweis
-                "Right-click red team's spawn location",
-                "Right-click ball spawn location",
-                "Type max players per team (1 or more)", // Dein neuer Bereich
-                "Allow players to touch the ball with hands? (yes/no)" // Deine neue Abfrage
+                "messages.newgame.football.step1",
+                "messages.newgame.football.step2",
+                "messages.newgame.football.step3",
+                "messages.newgame.football.step4",
+                "messages.newgame.football.step5",
+                "messages.newgame.football.step6",
+                "messages.newgame.football.step7",
+                "messages.newgame.football.step8",
+                "messages.newgame.football.step9",
+                "messages.newgame.football.step10",
+                "messages.newgame.football.step11",
+                "messages.newgame.football.step12",
+                "messages.newgame.football.step13",
+                "messages.newgame.football.step14",
+                "messages.newgame.football.step15"
         };
     }
 
     @Override
     public StepType[] getStepTypes() {
         return new StepType[]{
-                StepType.CLICK, StepType.CLICK, StepType.CLICK, // blue goal 1, 2, spawn
-                StepType.CLICK, StepType.CLICK, StepType.CLICK, // red goal 1, 2, spawn
-                StepType.CLICK,                                 // ball spawn
-                StepType.CHAT, StepType.CHAT                                  // max player
+                StepType.CLICK, StepType.CLICK, StepType.CLICK,
+                StepType.CLICK, StepType.CLICK, StepType.CLICK,
+                StepType.CLICK,
+                StepType.CHAT, StepType.CHAT, StepType.CHAT, StepType.CHAT, StepType.CHAT, StepType.CHAT, StepType.CHAT, StepType.CHAT
         };
     }
 
@@ -41,7 +47,14 @@ public class FootballSetup implements GameSetup {
                 null, null, null,
                 null, null, null,
                 null,
-                "^[1-9][0-9]*$", "^(yes|no)$"
+                "^[1-9][0-9]+$",
+                "^[1-9][0-9]*$",
+                "^[1-9][0-9]*$",
+                "^(yes|no)$",
+                "^(yes|no)$",
+                "^(yes|no)$",
+                "^[5-9]|[1-9][0-9]+$",
+                "^[0-9]+$"
         };
     }
 
