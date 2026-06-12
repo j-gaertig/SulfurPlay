@@ -1,3 +1,8 @@
+### ⚠️ **Warning:**
+> This project is no longer being developed; I would be happy if someone would take it over.
+
+<br>
+
 > ⚠️ **Early Development Warning**
 > SulfurFun is currently in active early development. Bugs are expected and features are incomplete. The Sulfur Cube ball will not be available until the **Chaos Cubed** update releases. Thank you for your patience!
 
